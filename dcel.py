@@ -1,11 +1,11 @@
 """
-Provides DCEL (dict-based), Vertex, hEdge, and Face classes.
+Provides DCEL (dict-based), Vertex, hEdge, and Face classes. Python 3.6 is strongly recommended.
 
-Adapted from list-based python2 implementation at: https://github.com/Ylannl/pydcel
+Adapted from list-based python 2.7 implementation at: https://github.com/Ylannl/pydcel
 """
 import numpy as np
 from operator import add, sub
-import itertools
+from itertools import islice
 
 
 class Vertex(object):
@@ -27,7 +27,7 @@ class Vertex(object):
             return (self.x,self.y,self.z)
 
     def __add__(self, other):
-        return tuple([add(pq[0], pq[1]) for pq in zip(self.p(), other.p())])
+        return tuple(add(*pq) for pq in zip(self.p(), other.p()))
 
     def __sub__(self, other):
         return tuple(sub(*pq) for pq in zip(self.p(), other.p()))
@@ -88,9 +88,8 @@ class Face(object):
         self.outerComponent = newOuterComponent
         self.innerComponent = newInnerComponent
         # calculate and set normal automatically
-        e1, e2, e3 = itertools.islice(self.outerComponent.loop(), 3)
-        self.normal = np.cross(e2.origin-e1.origin, e3.origin-e2.origin)
-
+        e1, e2, e3 = islice(self.outerComponent.loop(), 3)
+        self.normal = tuple(np.cross(e2.origin-e1.origin, e3.origin-e2.origin))
         
     def loopOuterVertices(self):
         for e in self.outerComponent.loop():
