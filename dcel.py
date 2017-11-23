@@ -10,7 +10,7 @@ from itertools import islice
 
 class Vertex(object):
     
-    def __init__(self, px, py, pz, identifier):
+    def __init__(self, px, py, pz, identifier=None):
         self.identifier = identifier
         self.x = px
         self.y = py
@@ -162,7 +162,7 @@ class DCEL(object):
             del self.faceDict[element.identifier]
             del element
         else:
-            print("illegal element type")
+            raise TypeException("Type "+str(type(element))+" cannot be removed.")
 
     def removeFace(self, face):
         """Remove a face + all of its vertices and halfedges"""
