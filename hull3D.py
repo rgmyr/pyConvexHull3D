@@ -83,20 +83,19 @@ class ConvexHull3D():
         '''Remove face and all components that are not on visibility boundary'''
         pass
 
-    def getConflictDict(self, new_pt):
-        '''Return list(dict?) of visibility of each face from new_pt'''
+    def getConflictDict(self, pt):
+        '''Returns boolean dict {face.id: is_visible_from_pt} for all faces'''
         visible = {}
         # For now we consider the coplanar case to be not visible
         for face in self.DCEL.faceDict.values():
-            if dot(face.normal, face.outerComponent.origin-new_pt) > 0:
+            if dot(face.normal, face.outerComponent.origin-newPt) > 0:
                 visible[face.identifier] = True
             else:
                 visible[face.identifier] = False
 
         return visible
 
-
-    def insertVertexWithChain(self, new_v, h_chain):
+    def insertVertexWithChain(self, newV, hChain):
         pass
 
     def runAlgorithm(self):
