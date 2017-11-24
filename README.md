@@ -24,13 +24,13 @@ import numpy as np
 pts = np.random.randint(-100, 100, (100,3))
 
 # Showing default parameters
-Hull = ConvexHull3D(pts, run=True, preproc=True, make_frames=False, frames_dir='./frames/')
+Hull = ConvexHull3D(pts, run=True, preproc=False, make_frames=False, frames_dir='./frames/')
 
 # To get Vertex objects:
 vertices = Hull.DCEL.vertexDict.values()
 
 # To get indices:
-pts = Hull.getPts()    # if preproc=True or input has duplicates
+pts = Hull.getPts()    # if preproc=True or input may have duplicates
 hull_vertices = pts[Hull.getVertexIndices()]
 ```
 
@@ -39,8 +39,8 @@ hull_vertices = pts[Hull.getVertexIndices()]
 `pts`
 - Should be type np.array with shape `(n, 3)`. **NOTE**: duplicate points will be removed.
 
-`preproc=True`
-- Set to `False` to disable preprocessing function, which swaps rows in `pts` such that Hull(`i=6`) is more likely to be large.
+`preproc=False`
+- Set to `True` to use preprocessing function, which swaps rows in `pts` such that Hull(`i=6`) is more likely to be large.
 
 `run=True`         
 - Set to `False` to run full algorithm at a later time by calling `Hull.runAlgorithm()`.

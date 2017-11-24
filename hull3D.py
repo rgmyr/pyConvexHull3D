@@ -2,6 +2,7 @@ from dcel import DCEL, Vertex
 from numpy import array, unique, append, dot, cross
 from collections import deque
 from itertools import permutations
+from random import sample
 
 import mpl_toolkits.mplot3d as mpl3D
 import matplotlib.pyplot as plt
@@ -19,6 +20,7 @@ def preprocess(pts):
        Swaps (unique) rows to front like [xmax, xmin, ymax, ymin, zmax, zmin]  
     """
     pts = unique(pts, axis=0)
+    pts = array(sample(list(pts), len(pts)))
     pts[[0, pts[:,0].argmax()]]  = pts[[pts[:,0].argmax(), 0]]
     pts[[1, pts[1:,0].argmin()+1]] = pts[[pts[1:,0].argmin()+1, 1]]
     pts[[2, pts[2:,1].argmax()+2]] = pts[[pts[2:,1].argmax()+2, 2]]
@@ -41,7 +43,7 @@ class ConvexHull3D():
             make_frames=False : set True to output png frames at each step to frame_dir
             frames_dir='./frames/' : set to change dir where frames are saved
     '''
-    def __init__(self, pts, run=True, preproc=True, make_frames=False, frames_dir='./frames/'):
+    def __init__(self, pts, run=True, preproc=False, make_frames=False, frames_dir='./frames/'):
         """Creates initial 4-vertex polyhedron."""
         assert pts.shape[1] == 3
         assert len(pts) > 3
@@ -56,6 +58,9 @@ class ConvexHull3D():
             self.pts = preprocess(pts)
         else:
             self.pts = unique(pts, axis=0)
+            # random array gets sorted by unique
+            self.pts = array(sample(list(self.pts), len(self.pts)))
+
         self.boxmax, self.boxmin = pts.max(), pts.min()
 
         self.id_to_idx = {}
