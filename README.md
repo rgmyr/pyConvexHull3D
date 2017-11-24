@@ -37,7 +37,7 @@ hull_vertices = pts[Hull.getVertexIndices()]
 #### Parameter explanations:
 
 `pts`
-- Should be type np.array with shape `(n, 3)`.
+- Should be type np.array with shape `(n, 3)`. **NOTE**: non-unique points will be removed.
 
 `preproc=True`
 - Set to `False` to disable preprocessing function, which swaps rows in `pts` such that Hull(`i=6`) is more likely to be large.
@@ -55,7 +55,7 @@ hull_vertices = pts[Hull.getVertexIndices()]
 
 Call `Hull.generateImage(show=True)` to generate and output an image using `plt.show()` rather than saving a png file. If `make_frames=False`, then this method will use `plt.show()` by default.
 
-If `preproc=True` and you want to compare output with another algorithm, call `Hull.getPts()` to get the points in the preprocessed order used by `Hull`.
+If `preproc=True` and you want to compare output with another algorithm, call `Hull.getPts()` to get the points in the preprocessed order used by `Hull`. This is good practice anyway, unless you are certain that `pts` are unique.
 
 The included `example.mp4` movie for 100 randomly distributed integer points was produced with `ffmpeg`:
 ```

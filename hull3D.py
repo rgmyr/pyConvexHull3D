@@ -34,7 +34,7 @@ class ConvexHull3D():
     '''
     Convex Hull of 3D point based on randomized incremental method from de Berg.
     
-    Input: pts [np.array with shape (n_points, 3)]
+    Input: pts [np.array with shape (n_points, 3)]. Points should be unique.
 
     Params: preproc=True      : set False to disable preprocessing
             run=True          : set False to run algorithm only when self.runAlgorithm() is called
@@ -55,7 +55,7 @@ class ConvexHull3D():
         if preproc:
             self.pts = preprocess(pts)
         else:
-            self.pts = pts
+            self.pts = unique(pts, axis=0)
         self.boxmax, self.boxmin = pts.max(), pts.min()
 
         self.id_to_idx = {}
