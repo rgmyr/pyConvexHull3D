@@ -18,7 +18,7 @@ Currently `pyConvexHull3D` produces the exact solution for sets of points in gen
 
 Simple usage example:
 ```Python
-from hull3D import ConvexHull3d
+from hull3D import ConvexHull3D
 import numpy as np
 
 pts = np.random.randint(-100, 100, (100,3))
