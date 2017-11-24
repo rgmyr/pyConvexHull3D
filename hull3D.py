@@ -131,8 +131,6 @@ class ConvexHull3D():
         # For now we consider the coplanar case to be not visible
         for face in self.DCEL.faceDict.values():
             if dot(face.normal, face.edgeComponent.origin-newV) > 0:
-                if dot(face.normal, face.edgeComponent.origin-newV) == 0:
-                    print(newPt, " was coplanar with a face")
                 visibility[face.identifier] = True
                 # add all visible components to the removeSets
                 self.removeFaceSet.add(face)
@@ -142,6 +140,10 @@ class ConvexHull3D():
                     self.removeVertexSet.add(v)
             else:
                 visibility[face.identifier] = False
+            '''
+            if dot(face.normal, face.edgeComponent.origin-newV) == 0:
+                print(newV, " was coplanar with a face")
+            '''
 
         return visibility
 
