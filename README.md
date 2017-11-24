@@ -26,11 +26,11 @@ pts = np.random.randint(-100, 100, (100,3))
 # Showing default parameters
 Hull = ConvexHull3D(pts, run=True, preproc=True, make_frames=False, frames_dir='./frames/')
 
-# To get vertex objects:
+# To get Vertex objects:
 vertices = Hull.DCEL.vertexDict.values()
 
 # To get indices:
-pts = Hull.getPts()    # if preproc=True
+pts = Hull.getPts()    # if preproc=True or input has duplicates
 hull_vertices = pts[Hull.getVertexIndices()]
 ```
 
