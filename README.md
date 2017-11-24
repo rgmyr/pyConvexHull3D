@@ -39,11 +39,11 @@ hull_vertices = pts[Hull.getVertexIndices()]
 `pts`
 - Should be type np.array with shape `(n, 3)`. **NOTE**: duplicate points will be removed.
 
-`preproc=False`
-- Set to `True` to use preprocessing function, which swaps rows in `pts` such that Hull(`i=6`) is more likely to be large.
-
 `run=True`         
 - Set to `False` to run full algorithm at a later time by calling `Hull.runAlgorithm()`.
+
+`preproc=False`
+- Set to `True` to use preprocessing function, which swaps rows in `pts` such that Hull(`i=6`) is more likely to be large.
 
 `make_frames=False`
 - Set to `True` to output png frames at each step to `frame_dir`.
