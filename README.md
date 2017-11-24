@@ -12,7 +12,7 @@ Aside from standard library modules `collections` and `itertools`, running the a
 
 ## Future Updates
 
-Currently `pyConvexHull3D` produces the exact solution for sets of points in general position (in the sense of no three points on the hull being colinear). This is almost always the case when using float coordinates, or integer coordinates in a bounding cube that is large relative to the number of points. When there are colinear points on the hull, the vertices reported by `QHull` are a proper subset of those reported by `pyConvexHull3D`.
+Currently `pyConvexHull3D` produces the exact solution for sets of points in general position (in the restricted sense of no point on the hull being incident on only coplanar faces). This is almost always the case when using float coordinates, or when using integer coordinates with a bounding box that is large relative to the number of points. When there *are* such points on the hull, the vertices reported by `QHull` are a proper subset of those reported by `pyConvexHull3D`.
 
 ## Usage
 
@@ -34,7 +34,7 @@ pts = Hull.getPts()    # if preproc=True
 hull_vertices = pts[Hull.getVertexIndices()]
 ```
 
-Parameter explanations:
+#### Parameter explanations:
 
 `pts`
 - Should be type np.array with shape `(n, 3)`.
@@ -50,6 +50,8 @@ Parameter explanations:
 
 `frames_dir='./frames/'`
 - Set to change directory where frames are saved if `make_frames=True`. This directory should exist.
+
+#### Other Usage
 
 Call `Hull.generateImage(show=True)` to generate and output an image using `plt.show()` rather than saving a png file. If `make_frames=False`, then this method will use `plt.show()` by default.
 
