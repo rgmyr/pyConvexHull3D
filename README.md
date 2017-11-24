@@ -37,7 +37,7 @@ hull_vertices = pts[Hull.getVertexIndices()]
 #### Parameter explanations:
 
 `pts`
-- Should be type np.array with shape `(n, 3)`. **NOTE**: non-unique points will be removed.
+- Should be type np.array with shape `(n, 3)`. **NOTE**: duplicate points will be removed.
 
 `preproc=True`
 - Set to `False` to disable preprocessing function, which swaps rows in `pts` such that Hull(`i=6`) is more likely to be large.
