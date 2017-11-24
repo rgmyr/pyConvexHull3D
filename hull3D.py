@@ -180,13 +180,14 @@ class ConvexHull3D():
         for h in boundary:
             f = self.DCEL.createFace()
             _h, h_ = tuple(self.DCEL.createHedge() for _ in range(2))
-            v_new.incidentEdge = _h
             for hedge in [_h, h, h_]:
                 hedge.incidentFace = f
             _h.origin, h_.origin = v_new, h.next.origin
             _h.previous, h.previous, h_.previous = h_, _h, h
             _h.next, h.next, h_.next = h, h_, _h
             f.setTopology(h)
+
+        v_new.incidentEdge = boundary[0].previous
 
         # now set the twins
         for i in range(-1,len(boundary)-1):
