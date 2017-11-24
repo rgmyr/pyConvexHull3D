@@ -41,7 +41,7 @@ class ConvexHull3D():
             make_frames=False : set True to output png frames at each step to frame_dir
             frames_dir='./frames/' : set to change dir where frames are saved
     '''
-    def __init__(self, pts, preproc=True, run=True, make_frames=False, frames_dir='./frames/'):
+    def __init__(self, pts, run=True, preproc=True, make_frames=False, frames_dir='./frames/'):
         """Creates initial 4-vertex polyhedron."""
         assert pts.shape[1] == 3
         assert len(pts) > 3
