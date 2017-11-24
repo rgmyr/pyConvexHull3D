@@ -1,5 +1,5 @@
 from dcel import DCEL, Vertex
-from numpy import dot, cross
+from numpy import array, unique, dot, cross
 from collections import deque
 from itertools import permutations
 import scipy as sp
@@ -15,24 +15,50 @@ def colinear(p0, p1, p2):
 def coplanar(p1, p2, p3, p0):
     return dot(cross(p1-p0, p2-p1), p0-p3) == 0
 
+def preprocess(pts):
+    """Assumes pts is an np.array with shape (n, 3).
+       Removes duplicate points.
+       Swaps (unique) rows to front [xmax, xmin, ymax, ymin, zmax, zmin]  
+    """
+    pts = unique(pts, axis=0)
+    pts[[0, pts[:,0].argmax()]]  = pts[[pts[:,0].argmax(), 0]]
+    pts[[1, pts[1:,0].argmin()+1]] = pts[[pts[1:,0].argmin()+1, 1]]
+    pts[[2, pts[2:,1].argmax()+2]] = pts[[pts[2:,1].argmax()+2, 2]]
+    pts[[3, pts[3:,1].argmin()+3]] = pts[[pts[3:,1].argmin()+3, 3]]
+    if len(pts) > 4:
+        pts[[4, pts[4:,2].argmax()+4]] = pts[[pts[4:,2].argmax()+4, 4]]
+    if len(pts) > 5:
+        pts[[5, pts[5:,2].argmin()+5]] = pts[[pts[5:,2].argmin()+5, 5]]
+    return pts
+
 
 class ConvexHull3D():
     '''
     Convex Hull of 3D point based on randomized incremental method from de Berg.
     
-    Input: pts [array-like with shape (n_points, 3)]
+    Input: pts [np.array with shape (n_points, 3)]
 
+        To get hull vertices, look at self.DCEL.vertexDict.values() --> Vertex objects
+                      or, self.getVertexIndices() --> indices relative to pts or preprocess(pts)
+
+        If you want to compare output for preprocess(pts) call self.getPts()
     '''
-    def __init__(self, pts=None):
+    def __init__(self, pts, preproc=True, run=True, make_frames=False):
         """Creates initial 4-vertex polyhedron.
-        TODO: - check for colinear/coplanar initial pts 
-              - preprocess by moving maximal pts to the front?
-
+           - if preproc == True, will preprocess with function defined above
+           - if run == True, will call self.runAlgorithm()
         """
         assert pts.shape[1] == 3
         assert len(pts) > 3
+        self.make_frames = make_frames
 
-        self.pts = pts
+        if preproc:
+            self.pts = preprocess(pts)
+        else:
+            self.pts = pts
+        self.boxmax, self.boxmin = pts.max(), pts.min()
+
+        self.id_to_idx = {}
         self.DCEL = DCEL()
         self.removeVertexSet = set()
         self.removeHEdgeSet  = set()
@@ -41,8 +67,14 @@ class ConvexHull3D():
         self.safeHEdgeSet    = set()
 
         # create first vertices and define CCW (outward normal) order
-        v0, v1, v2, v3 = tuple(self.DCEL.createVertex(*pts[i]) for i in range(4))
-        if dot(cross(v1-v0, v2-v1), v0-v3) < 0:
+        v0, v1, v2, v3 = tuple(self.DCEL.createVertex(*self.pts[i]) for i in range(4))
+        self.id_to_idx[3] = 3
+        AB = dot(cross(v1-v0, v2-v1), v0-v3)  
+        if AB == 0:
+            error = ("First 4 pts are coplanar. Try passing preproc=False and using "+
+                     "np.random.shuffle(pts). If error persists, pts may all be coplanar.")
+            raise ValueError(error)
+        elif AB < 0:
             vertices = (v0, v1, v2)
         else:
             vertices = (v0, v2, v1)
@@ -51,6 +83,7 @@ class ConvexHull3D():
         face = self.DCEL.createFace()
         hedges = [self.DCEL.createHedge() for _ in range(6)]
         for h, v in zip(hedges[:3], vertices):
+            self.id_to_idx[v.identifier] = v.identifier
             h.incidentFace = face
             v.incidentEdge = h
         for h, _h, v in zip(hedges, hedges[::-1], sum(permutations(vertices, 3), ())):
@@ -65,11 +98,15 @@ class ConvexHull3D():
                 deq.rotate(1)
 
         face.setTopology(hedges[0])
-
-        self.generateImage()
-        # second three hedges form visible boundary chain for v4
+        if self.make_frames: self.generateImage()
         self.updateHull(v3, hedges[3:])
-        self.generateImage()
+        if self.make_frames: self.generateImage()
+
+        if run:
+            self.runAlgorithm()
+
+    def getPts(self):
+        return self.pts
 
     def removeConflicts(self):
         """Remove all visible elements that were not on boundary."""
@@ -92,30 +129,29 @@ class ConvexHull3D():
         newV = Vertex(*newPt)
         # For now we consider the coplanar case to be not visible
         for face in self.DCEL.faceDict.values():
-            if dot(face.normal, face.outerComponent.origin-newV) > 0:
+            if dot(face.normal, face.edgeComponent.origin-newV) > 0:
+                if dot(face.normal, face.edgeComponent.origin-newV) == 0:
+                    print(newPt, " was coplanar with a face")
                 visibility[face.identifier] = True
                 # add all visible components to the removeSets
                 self.removeFaceSet.add(face)
-                for h in face.outerComponent.loop():
+                for h in face.edgeComponent.loop():
                     self.removeHEdgeSet.add(h)
                 for v in face.loopOuterVertices():
                     self.removeVertexSet.add(v)
             else:
                 visibility[face.identifier] = False
 
-        print("faceDict:\n", self.DCEL.faceDict.keys())
-        print("visibility:\n", visibility.keys())
-
         return visibility
 
     def getBoundaryChain(self, visibility):
-        """visibility should be dict from self.getConflictDict(newPt)"""
+        """visibility should be dict from self.getVisibilityDict(newPt)"""
         # find first hedge in chain
         boundary = []
         for identifier, visible in visibility.items():
             if visible:
                 # check if any hedges have twin.incidentface = not visible
-                for h in self.DCEL.faceDict[identifier].outerComponent.loop():
+                for h in self.DCEL.faceDict[identifier].edgeComponent.loop():
                     if not visibility[h.twin.incidentFace.identifier]:
                         boundary.append(h)
                         self.safeHEdgeSet.add(h)
@@ -151,17 +187,18 @@ class ConvexHull3D():
             _h.next, h.next, h_.next = h, h_, _h
             f.setTopology(h)
 
-        # now set the twins
-        boundary[-1].next.twin = boundary[0].previous
-        boundary[0].previous.twin = boundary[-1].next
-        for i in range(len(boundary)-1):
+        # now set the twins, check for colinear vertices
+        # earlier I check for double/triple coplanar faces, but it didn't help?
+        for i in range(-1,len(boundary)-1):
+            if colinear(v_new, h.origin, h.twin.previous.origin):
+                print("COLINEAR!")
             boundary[i].next.twin = boundary[i+1].previous 
             boundary[i+1].previous.twin = boundary[i].next
 
         self.removeConflicts()
         return
 
-    def insertPoint(self, newPt):
+    def insertPoint(self, newPt, i):
         """Update the hull given new point."""
         visibility = self.getVisibilityDict(newPt)
         if not any(list(visibility.values())):
@@ -172,39 +209,37 @@ class ConvexHull3D():
 
         boundary = self.getBoundaryChain(visibility)
         v_new = self.DCEL.createVertex(*newPt)
+        self.id_to_idx[v_new.identifier] = i+4
         self.updateHull(v_new, boundary) 
-        return
+        return 
 
     def runAlgorithm(self, make_frames=False):
-        for pt in self.pts[4:]:
-            self.insertPoint(pt)
+        for i, pt in enumerate(self.pts[4:]):
+            self.insertPoint(pt, i)
             if make_frames:
                 self.generateImage()
         return
 
-    def generateImage(self):
-        """Plot all the faces on a 3D axis"""
+    def getVertexIndices(self):
+        return list(self.id_to_idx[identifier] for identifier in self.DCEL.vertexDict.keys())
+
+    def generateImage(self, visibility=None):
+        """Plot all the faces and pts on a 3D axis"""
         ax = mpl3D.Axes3D(plt.figure(figsize=[20,15]))
-        ax.set_xlim([-10,10])
-        ax.set_ylim([-10,10])
-        ax.set_zlim([-10,10])
+        ax.set_xlim([self.boxmin,self.boxmax])
+        ax.set_ylim([self.boxmin,self.boxmax])
+        ax.set_zlim([self.boxmin,self.boxmax])
+
+        vertices = array([list(v.p()) for v in self.DCEL.vertexDict.values()])
+        #ax.set_alpha(0.2)
+        ax.scatter(self.pts[:,0], self.pts[:,1], self.pts[:,2], s=50, c='r', marker='o')
 
         for face in self.DCEL.faceDict.values():
             tri = mpl3D.art3d.Poly3DCollection([[list(v.p()) for v in face.loopOuterVertices()]])
-            tri.set_color(colors.rgb2hex(sp.rand(3))) # add functionality for visible faces later
-            tri.set_alpha(0.1)
+            tri.set_facecolor(colors.rgb2hex(sp.rand(3))) # add functionality for visible faces later
+            #tri.set_alpha(0.1)
             tri.set_edgecolor('k')
             ax.add_collection3d(tri)
-
-        ax.set_alpha(0.2)
-        ax.scatter(self.pts[:,0], self.pts[:,1], self.pts[:,2], c='r', marker='o')
-
-        plt.show()
-
         
-
-
-
-
-            
+        plt.show()
 

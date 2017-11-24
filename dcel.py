@@ -20,11 +20,8 @@ class Vertex(object):
     def setTopology(self, newIncedentEdge):
         self.incidentEdge = newIncedentEdge
         
-    def p(self, array=False):
-        if array:
-            return np.array([self.x,self.y,self.z])
-        else:
-            return (self.x,self.y,self.z)
+    def p(self):
+        return (self.x,self.y,self.z)
 
     def __add__(self, other):
         return tuple(add(*pq) for pq in zip(self.p(), other.p()))
@@ -80,19 +77,16 @@ class Face(object):
     
     def __init__(self, identifier):
         self.identifier = identifier
-        self.outerComponent = None
-        self.innerComponent = None # do I need this?
+        self.edgeComponent = None
         self.normal = None
 
-    def setTopology(self, newOuterComponent, newInnerComponent=None):
-        self.outerComponent = newOuterComponent
-        self.innerComponent = newInnerComponent
-        # calculate and set normal automatically
-        e1, e2, e3 = islice(self.outerComponent.loop(), 3)
+    def setTopology(self, newEdgeComponent):
+        self.edgeComponent = newEdgeComponent
+        e1, e2, e3 = islice(self.edgeComponent.loop(), 3)
         self.normal = tuple(np.cross(e2.origin-e1.origin, e3.origin-e2.origin))
         
     def loopOuterVertices(self):
-        for e in self.outerComponent.loop():
+        for e in self.edgeComponent.loop():
             yield e.origin
 
     def __repr__(self):
@@ -103,13 +97,13 @@ class Face(object):
 class DCEL(object):
     
     def __init__(self):
-        """Note: safe b/c python3.6 dicts preserve insertion-order of elements"""
         self.vertexDict = {}
         self.hedgeDict = {}
         self.faceDict = {}
         self.infiniteFace = None
 
     def getNewId(self, D):
+        """NOTE: only tested with python v3.6, where dicts preserve insertion-order of items"""
         if len(D) == 0:
             return 0
         else:
@@ -133,23 +127,6 @@ class DCEL(object):
         self.faceDict[identifier] = f
         return f
 
-    def createInfFace(self):
-        identifier = "i"
-        f = Face(identifier)
-        self.infiniteFace = f
-        return f
-
-    def insert(self, element):
-        """Elements should be created using methods above."""
-        if type(element) is Vertex:
-            self.vertexDict[element.identifier] = element
-        elif type(element) is hEdge:
-            self.hedgeDict[element.identifier] = element
-        elif type(element) is Face:
-            self.faceDict[element.identifier] = element
-        else:
-            print(type(element), " is an illegal element type.")
-
     def remove(self, element):
         """Be careful: not a safe removal. References to element may still exist."""
         if type(element) is Vertex:
@@ -164,11 +141,6 @@ class DCEL(object):
         else:
             raise TypeException("Type "+str(type(element))+" cannot be removed.")
 
-    def removeFace(self, face):
-        """Remove a face + all of its vertices and halfedges"""
-        pass
-
-
     def __repr__(self):
         s = "{} \t\t\t{}\n".format("VERTEX", "incidentEdge")
         for v in self.vertexDict.values():
@@ -179,9 +151,9 @@ class DCEL(object):
             s += "{}:\t v{}\t{}\t{}\t{}\t{}\n".format(e, e.origin.identifier,
                                   e.twin, e.incidentFace, e.next, e.previous)
 
-        s += "\n{} \t{}\n".format("FACE", "outerComponent")
+        s += "\n{} \t{}\n".format("FACE", "edgeComponent")
         for f in self.faceDict.values():
-            s += "{}:\t{}\n".format(f, f.outerComponent)
+            s += "{}:\t{}\n".format(f, f.edgeComponent)
         return s
 
     def checkEdgeTwins(self):
