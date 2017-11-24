@@ -40,15 +40,6 @@ class ConvexHull3D():
             run=True          : set False to run algorithm only when self.runAlgorithm() is called
             make_frames=False : set True to output png frames at each step to frame_dir
             frames_dir='./frames/' : set to change dir where frames are saved
-
-        Use self.generateImage(show=True) to use plt.show() rather than saving png. If 
-            make_frames=False, it will use plt.show() by default.
-
-        To get (current) hull vertices, use self.DCEL.vertexDict.values() --> Vertex objects
-                or, self.getVertexIndices() --> indices relative to pts or preprocess(pts)
-
-        If you want to compare output with preprocess(pts) call self.getPts()
-
     '''
     def __init__(self, pts, preproc=True, run=True, make_frames=False, frames_dir='./frames/'):
         """Creates initial 4-vertex polyhedron."""
@@ -199,7 +190,7 @@ class ConvexHull3D():
 
         # now set the twins
         for i in range(-1,len(boundary)-1):
-            """ NOTE: Colinear case sames to be reason for extra vertices
+            """ NOTE: Colinear case sames to be related to extra vertices
             if colinear(v_new, h.origin, h.twin.previous.origin):
                 print("COLINEAR!")
             """

@@ -1,6 +1,6 @@
 # pyConvexHull3D
 
-`dcel.py`: Provides the doubly-connected edge list, Vertex, hEdge, and Face classes. `DCEL` is a `dict`-based implementation, adapted from the `list`-based python2 implementation at: [https://github.com/Ylannl/pydcel](https://github.com/Ylannl/pydcel). Python version >=3.6 is strongly recommended, as the implementation here assumes that dictionaries preserve insertion order. In theory, it should work with key-ordered dicts as well, but this has not been tested.
+`dcel.py`: Provides the doubly-connected edge list, Vertex, hEdge, and Face classes. `DCEL` is a `dict`-based implementation, adapted from the `list`-based python2 implementation at [Ylannl/pydcel](https://github.com/Ylannl/pydcel). Python version >=3.6 is strongly recommended, as this implementation assumes that dictionaries preserve insertion order. In theory, it should work with `collections.OrderedDict` as well, but this has not been tested. I chose not use `OrderedDict` here because it is a pure Python structure and as a result is much slower.
 
 `hull3D.py`: Provides the `ConvexHull3D` algorithm class with visualization capabilities.
 
