@@ -1,11 +1,9 @@
 from dcel import DCEL, Vertex
-from numpy import array, unique, dot, cross
+from numpy import array, unique, append, dot, cross
 from collections import deque
 from itertools import permutations
-import scipy as sp
 
 import mpl_toolkits.mplot3d as mpl3D
-import matplotlib.colors as colors
 import matplotlib.pyplot as plt
 
 
@@ -18,7 +16,7 @@ def coplanar(p1, p2, p3, p0):
 def preprocess(pts):
     """Assumes pts is an np.array with shape (n, 3).
        Removes duplicate points.
-       Swaps (unique) rows to front [xmax, xmin, ymax, ymin, zmax, zmin]  
+       Swaps (unique) rows to front like [xmax, xmin, ymax, ymin, zmax, zmin]  
     """
     pts = unique(pts, axis=0)
     pts[[0, pts[:,0].argmax()]]  = pts[[pts[:,0].argmax(), 0]]
@@ -38,19 +36,30 @@ class ConvexHull3D():
     
     Input: pts [np.array with shape (n_points, 3)]
 
-        To get hull vertices, look at self.DCEL.vertexDict.values() --> Vertex objects
-                      or, self.getVertexIndices() --> indices relative to pts or preprocess(pts)
+    Params: preproc=True      : set False to disable preprocessing
+            run=True          : set False to run algorithm only when self.runAlgorithm() is called
+            make_frames=False : set True to output png frames at each step to frame_dir
+            frames_dir='./frames/' : set to change dir where frames are saved
 
-        If you want to compare output for preprocess(pts) call self.getPts()
+        Use self.generateImage(show=True) to use plt.show() rather than saving png. If 
+            make_frames=False, it will use plt.show() by default.
+
+        To get (current) hull vertices, use self.DCEL.vertexDict.values() --> Vertex objects
+                or, self.getVertexIndices() --> indices relative to pts or preprocess(pts)
+
+        If you want to compare output with preprocess(pts) call self.getPts()
+
     '''
-    def __init__(self, pts, preproc=True, run=True, make_frames=False):
-        """Creates initial 4-vertex polyhedron.
-           - if preproc == True, will preprocess with function defined above
-           - if run == True, will call self.runAlgorithm()
-        """
+    def __init__(self, pts, preproc=True, run=True, make_frames=False, frames_dir='./frames/'):
+        """Creates initial 4-vertex polyhedron."""
         assert pts.shape[1] == 3
         assert len(pts) > 3
+
         self.make_frames = make_frames
+        if make_frames: 
+            self.pad = len(str(2*len(pts)))
+            self.frames_dir = frames_dir
+            self.frames_count = 0
 
         if preproc:
             self.pts = preprocess(pts)
@@ -98,6 +107,7 @@ class ConvexHull3D():
                 deq.rotate(1)
 
         face.setTopology(hedges[0])
+
         if self.make_frames: self.generateImage()
         self.updateHull(v3, hedges[3:])
         if self.make_frames: self.generateImage()
@@ -145,7 +155,7 @@ class ConvexHull3D():
         return visibility
 
     def getBoundaryChain(self, visibility):
-        """visibility should be dict from self.getVisibilityDict(newPt)"""
+        """visibility should be dict from self.getVisibilityDict(newPt)."""
         # find first hedge in chain
         boundary = []
         for identifier, visible in visibility.items():
@@ -174,7 +184,7 @@ class ConvexHull3D():
         return boundary
 
     def updateHull(self, v_new, boundary):
-        """Generate components & set topologies given newPt and boundary chain."""
+        """Generate components, set topologies, delete superceded components."""
         # loop over single new triangles
         for h in boundary:
             f = self.DCEL.createFace()
@@ -187,11 +197,12 @@ class ConvexHull3D():
             _h.next, h.next, h_.next = h, h_, _h
             f.setTopology(h)
 
-        # now set the twins, check for colinear vertices
-        # earlier I check for double/triple coplanar faces, but it didn't help?
+        # now set the twins
         for i in range(-1,len(boundary)-1):
+            """ NOTE: Colinear case sames to be reason for extra vertices
             if colinear(v_new, h.origin, h.twin.previous.origin):
                 print("COLINEAR!")
+            """
             boundary[i].next.twin = boundary[i+1].previous 
             boundary[i+1].previous.twin = boundary[i].next
 
@@ -200,46 +211,48 @@ class ConvexHull3D():
 
     def insertPoint(self, newPt, i):
         """Update the hull given new point."""
+        if self.make_frames: self.generateImage(newPt=newPt)
         visibility = self.getVisibilityDict(newPt)
         if not any(list(visibility.values())):
             return
-        
-        # TODO: make red/blue coded plot
-        #if self.make_frames == True:
 
         boundary = self.getBoundaryChain(visibility)
         v_new = self.DCEL.createVertex(*newPt)
         self.id_to_idx[v_new.identifier] = i+4
         self.updateHull(v_new, boundary) 
+        if self.make_frames: self.generateImage()
         return 
 
     def runAlgorithm(self, make_frames=False):
         for i, pt in enumerate(self.pts[4:]):
             self.insertPoint(pt, i)
-            if make_frames:
-                self.generateImage()
         return
 
     def getVertexIndices(self):
         return list(self.id_to_idx[identifier] for identifier in self.DCEL.vertexDict.keys())
 
-    def generateImage(self, visibility=None):
-        """Plot all the faces and pts on a 3D axis"""
+    def generateImage(self, newPt=None, show=False):
+        """Plot all the faces and vertices on a 3D axis"""
         ax = mpl3D.Axes3D(plt.figure(figsize=[20,15]))
         ax.set_xlim([self.boxmin,self.boxmax])
         ax.set_ylim([self.boxmin,self.boxmax])
         ax.set_zlim([self.boxmin,self.boxmax])
 
         vertices = array([list(v.p()) for v in self.DCEL.vertexDict.values()])
-        #ax.set_alpha(0.2)
-        ax.scatter(self.pts[:,0], self.pts[:,1], self.pts[:,2], s=50, c='r', marker='o')
+        if newPt is not None: vertices = append(vertices, array([newPt]), axis=0)
+        ax.scatter(vertices[:,0], vertices[:,1], vertices[:,2], s=50, c='r', marker='o')
 
+        alpha = 0.1
         for face in self.DCEL.faceDict.values():
             tri = mpl3D.art3d.Poly3DCollection([[list(v.p()) for v in face.loopOuterVertices()]])
-            tri.set_facecolor(colors.rgb2hex(sp.rand(3))) # add functionality for visible faces later
+            tri.set_facecolor((0,0,1, 0.2)) # add functionality for visible faces later
             #tri.set_alpha(0.1)
-            tri.set_edgecolor('k')
+            tri.set_edgecolor((0,0,0, 0.2))
             ax.add_collection3d(tri)
-        
-        plt.show()
-
+       
+        if show or not self.make_frames: 
+            plt.show()
+        else:
+            plt.savefig(self.frames_dir+'frame_'+str(self.frames_count).zfill(self.pad))
+            plt.close()
+            self.frames_count += 1
