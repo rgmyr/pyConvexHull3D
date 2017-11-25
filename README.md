@@ -12,7 +12,7 @@ Aside from standard library modules `collections` and `itertools`, running the a
 
 ## Future Updates
 
-Currently `pyConvexHull3D` produces the exact solution for sets of points in general position (in the restricted sense of no point on the hull being incident on adjacent coplanar faces). This is almost always the case when using float coordinates, or when using integer coordinates with a bounding box that is large relative to the number of points. When there *are* such points on the hull, the vertices reported by `QHull` are a proper subset of those reported by `pyConvexHull3D`.
+Currently `pyConvexHull3D` produces the exact solution for sets of points in general position (in the restricted sense of no three points on hull boundary being colinear and no four adjacent points on the hull boundary being coplanar). This is almost always the case when using float coordinates, or when using integer coordinates with a bounding box that is large relative to the number of points. When there *are* such points on the hull, the vertices reported by `QHull` are a proper subset of those reported by `pyConvexHull3D`.
 
 ## Usage
 
