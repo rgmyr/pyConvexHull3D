@@ -7,7 +7,7 @@ def main():
     # integer coords in small box
     print("FIVE TESTS: 100 integer points in [-10,10]^3 box")
     for i in range(5):
-        print("\nTEST {}:".format(i))
+        print("\nTEST {}:".format(i+1))
         pts = np.random.randint(-10, 10, (100, 3))
 
         myHull = ConvexHull3D(pts)
@@ -28,7 +28,7 @@ def main():
     # integer coords in a big box        
     print("\n\nFIVE TESTS: 100 integer points in [-100,100]^3 box")
     for i in range(5):
-        print("\nTEST {}:".format(i))
+        print("\nTEST {}:".format(i+1))
         pts = np.random.randint(-100, 100, (100, 3))
 
         myHull = ConvexHull3D(pts)
@@ -49,7 +49,7 @@ def main():
     # float coords in whatever box
     print("\n\nFIVE TESTS: 100 float points in a [-1,1]^3 box")
     for i in range(5):
-        print("\nTEST {}:".format(i))
+        print("\nTEST {}:".format(i+1))
         pts = np.random.uniform(low=-1.0, high=1.0, size=(100, 3))
 
         myHull = ConvexHull3D(pts)
