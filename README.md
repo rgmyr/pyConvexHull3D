@@ -4,7 +4,7 @@
 
 `hull3D.py`: Provides the `ConvexHull3D` algorithm class with visualization capabilities.
 
-`test.py`: Runs tests and prints output.
+`test.py`: Runs tests: compares `ConvexHull3d` output to `QHull` output and prints results.
 
 ## Dependencies  
 
@@ -12,7 +12,7 @@ Aside from standard library modules `collections` and `itertools`, running the a
 
 ## Future Updates
 
-Currently `pyConvexHull3D` produces the exact solution for sets of points in general position (in the restricted sense of no three points on hull boundary being colinear and no four adjacent points on the hull boundary being coplanar). This is almost always the case when using float coordinates, or when using integer coordinates with a bounding box that is large relative to the number of points. When there *are* such points on the hull, the vertices reported by `QHull` are a proper subset of those reported by `pyConvexHull3D`.
+Currently `pyConvexHull3D` produces the exact solution for sets of points in general position (in the restricted sense of no three points on hull boundary being colinear, and no four adjacent points on the hull boundary being coplanar). This is almost always the case when using float coordinates, or when using random integer coordinates with a bounding box that is large relative to the number of points. When there *are* such points on the hull, the vertices reported by `QHull` are a proper subset of those reported by `pyConvexHull3D`.
 
 ## Usage
 
@@ -30,7 +30,7 @@ Hull = ConvexHull3D(pts, run=True, preproc=False, make_frames=False, frames_dir=
 vertices = Hull.DCEL.vertexDict.values()
 
 # To get indices:
-pts = Hull.getPts()    # if preproc=True or input may have duplicates
+pts = Hull.getPts()    # to get pts in order used by ConvexHull3d
 hull_vertices = pts[Hull.getVertexIndices()]
 ```
 
