@@ -32,6 +32,9 @@ vertices = Hull.DCEL.vertexDict.values()
 # To get indices:
 pts = Hull.getPts()    # to get pts in order used by ConvexHull3d
 hull_vertices = pts[Hull.getVertexIndices()]
+
+# To get vertices of each Face:
+faces = [[list(v.p()) for v in face.loopOuterVertices()] for face in Hull.faceDict.values()]
 ```
 
 #### Parameter explanations:
